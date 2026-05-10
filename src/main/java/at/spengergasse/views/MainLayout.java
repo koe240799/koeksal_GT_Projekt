@@ -73,7 +73,7 @@ public class MainLayout extends AppLayout {
     }
 
     public MainLayout() {
-        addToNavbar(createHeaderContent());
+        addToNavbar(true,createHeaderContent());
     }
 
     private Component createHeaderContent() {
@@ -83,7 +83,7 @@ public class MainLayout extends AppLayout {
         Div layout = new Div();
         layout.addClassNames(Display.FLEX, AlignItems.CENTER, Padding.Horizontal.LARGE);
 
-        H1 appName = new H1("GRAPHCALCULATOR");
+        H1 appName = new H1("GRAPH-CALCULATOR");
         appName.addClassNames(Margin.Vertical.MEDIUM, Margin.End.AUTO, FontSize.LARGE);
         layout.add(appName);
 

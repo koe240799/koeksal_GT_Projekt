@@ -1,3 +1,34 @@
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+header > div {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+header nav {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+header nav ul {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--lumo-space-s);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
 header nav a:any-link {
   text-decoration: none;
   padding: 0 var(--lumo-space-s);

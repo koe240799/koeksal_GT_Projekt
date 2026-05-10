@@ -1,5 +1,6 @@
 package at.spengergasse.views.graph;
 
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
@@ -16,13 +17,10 @@ import org.vaadin.lineawesome.LineAwesomeIconUrl;
 public class GraphView extends VerticalLayout {
 
     public GraphView() {
-        setSpacing(false);
+        setSpacing(true);
 
-        Image img = new Image("images/empty-plant.png", "placeholder plant");
-        img.setWidth("200px");
-        add(img);
 
-        H2 header = new H2("This place intentionally left empty");
+        H1 header = new H1("Upload der CSV Datei");
         header.addClassNames(Margin.Top.XLARGE, Margin.Bottom.MEDIUM);
         add(header);
         add(new Paragraph("It’s a place where you can grow your own UI 🤗"));
