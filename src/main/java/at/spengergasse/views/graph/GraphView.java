@@ -3,6 +3,7 @@ package at.spengergasse.views.graph;
 import at.spengergasse.model.Graph;
 import at.spengergasse.service.GraphService;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -12,13 +13,14 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 @PageTitle("Graph")
 @Route("")
 public class GraphView extends VerticalLayout {
 
-    private final Grid<List<Object>> grid = new Grid<>();
+    private final Grid<List<String>> grid = new Grid<>();
     private final GraphService service = new GraphService();
 
     public GraphView() {
@@ -29,20 +31,25 @@ public class GraphView extends VerticalLayout {
 
         add(new H1("CSV Upload"));
 
+        Div container = new Div();
+        setAlignItems(Alignment.CENTER);
+        container.setWidth("80%");
+        container.setHeight("80%");
+        container.add(grid);
+
         FileBuffer buffer = new FileBuffer();
         Upload upload = new Upload(buffer);
 
         upload.setAcceptedFileTypes(".csv");
 
+
         upload.addSucceededListener(event -> {
             try {
                 InputStream inputStream = buffer.getInputStream();
 
-                Graph graph = service.parseCsvQuadratic(inputStream);
+                Graph graph = service.load(inputStream);
+                showGraph(graph);
 
-                getUI().ifPresent(ui ->
-                        ui.access(() -> showGraph(graph))
-                );
 
                 Notification.show("Graph wurde erfolgreich geladen");
 
@@ -51,79 +58,56 @@ public class GraphView extends VerticalLayout {
             }
         });
 
-        add(upload, grid);
+        upload.addFileRemovedListener(e -> {
+            resetView();
+            Notification.show("Ansicht neu geladen!");
+        });
+
+        add(upload, container);
     }
+
+    private void resetView() {
+            grid.removeAllColumns();
+            grid.setItems(List.of());
+        }
+
 
     // 🔥 BLOCKER + VIEW LOGIC
     private void showGraph(Graph graph) {
 
         grid.removeAllColumns();
 
-        List<List<Object>> matrix = graph.getMatrix();
+        List<List<Integer>> matrix = graph.getMatrix();
+        List<String> labels = graph.getLabels();
 
         if (matrix.isEmpty()) {
             grid.setItems(List.of());
             return;
         }
 
+        int n = matrix.size();
 
-//        Wenn die Matrix nicht quadratisch ist dann wird kommt eine Fehlermeldung und es wird gestoppt!
-        if (!isQuadratic(matrix)) {
+        grid.addColumn(row -> row.get(0))
+                .setHeader("#")
+                .setWidth("30px")
+                .setFlexGrow(0);
 
-            grid.setItems(matrix); // optional nur anzeigen
-
-            Notification.show(
-                    "⚠ Matrix ist NICHT quadratisch – Verarbeitung gestoppt",
-                    5000,
-                    Notification.Position.MIDDLE
-            );
-
-            return;
-        }
-
-        // Grid wird nur aufgebaut wenn die Matrix quadratisch ist!
-        grid.addColumn(row ->
-                        "Row " + matrix.indexOf(row)
-                ).setHeader("#")
-                .setFlexGrow(0)
-                .setWidth("90px");
-
-        int cols = matrix.get(0).size();
-
-        for (int i = 0; i < cols; i++) {
+        for (int i = 0; i < n; i++) {
             final int col = i;
-
-            grid.addColumn(row ->
-                    col < row.size() ? String.valueOf(row.get(col)) : "⚠"
-            ).setHeader(toColumnName(i));
+            grid.addColumn(row -> row.get(col + 1))
+                    .setHeader(labels.get(i));
         }
 
-        grid.setItems(matrix);
-    }
-
-
-    private boolean isQuadratic(List<List<Object>> matrix) {
-
-        int size = matrix.get(0).size();
-
-        for (List<Object> row : matrix) {
-            if (row.size() != size) {
-                return false;
+        List<List<String>> rows = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            List<String> row = new ArrayList<>();
+            row.add(labels.get(i));
+            for (int j = 0; j < n; j++) {
+                row.add(String.valueOf(matrix.get(i).get(j)));
             }
+            rows.add(row);
         }
+        grid.setItems(rows);
 
-        return matrix.size() == size;
-    }
-
-
-    private String toColumnName(int index) {
-        StringBuilder sb = new StringBuilder();
-
-        while (index >= 0) {
-            sb.insert(0, (char) ('A' + (index % 26)));
-            index = (index / 26) - 1;
-        }
-
-        return sb.toString();
     }
 }

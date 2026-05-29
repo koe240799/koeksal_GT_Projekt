@@ -9,65 +9,60 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GraphService {
+    private final GraphValidation validation = new GraphValidation();
 
-    public Graph parseCsvQuadratic(InputStream inputStream) {
+    public Graph load(InputStream inputStream) {
 
-        List<List<Object>> matrix = new ArrayList<>();
+        List<List<Integer>> matrix = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 
             String line;
-            int expectedSize = -1;
             int rowIndex = 0;
 
             while ((line = reader.readLine()) != null) {
 
-                line = line.replaceAll("[|;]+", ",")
-                        .replaceAll(",+", ",")
-                        .replaceAll("^,|,$", "");
-
-                String[] parts = line.split(",");
-
-                List<Object> row = new ArrayList<>();
-
-                for (String p : parts) {
-                    String token = p.trim();
-
-                    if (token.isEmpty()) {
-                        row.add(null);
-                    } else if (token.matches("-?\\d+")) {
-                        row.add(Integer.parseInt(token));
-                    } else {
-                        row.add(token);
-                    }
-                }
-
-                if (expectedSize == -1) {
-                    expectedSize = row.size();
-                }
-
-                if (row.size() != expectedSize) {
-                    throw new IllegalArgumentException(
-                            "Keine quadratische Matrix: Zeile " + rowIndex +
-                                    " hat " + row.size() + " statt " + expectedSize
-                    );
-                }
-
+                line = normalize(line);
+                List<Integer> row = parseRow(line, rowIndex);
                 matrix.add(row);
                 rowIndex++;
-            }
 
-            if (matrix.size() != expectedSize) {
-                throw new IllegalArgumentException(
-                        "Keine quadratische Matrix: Zeilen=" +
-                                matrix.size() + ", Spalten=" + expectedSize
-                );
-            }
 
+            }
         } catch (Exception e) {
-            throw new RuntimeException("Es sind nur quadratische Matrizen erlaubt");
+            throw new RuntimeException("Fehler beim Einlesen der Datei ! " + e.getMessage());
         }
-
+        validation.validate(matrix);
         return new Graph(matrix);
+    }
+
+    private List<Integer> parseRow(String line, int rowIndex) {
+        String[] parts = line.split("[,;|]+");
+        List<Integer> row = new ArrayList<>();
+
+        for (int colIndex = 0; colIndex < parts.length; colIndex++) {
+            String token = parts[colIndex].trim();
+
+            if (token.isEmpty()) {
+                throw new IllegalArgumentException("Leerer Wert in der Zeile: " + rowIndex + "Spalte: " +
+                        colIndex + "!");
+            }
+
+            try {
+
+                row.add(Integer.parseInt(token));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                        "Ungültige Zahl: " + token +
+                                "in der Zeile: " + rowIndex +
+                                "Spalte: " + colIndex);
+            }
+        }
+        return row;
+    }
+
+    private String normalize(String line) {
+//        trimmen und Leerzeichen entfernen
+        return line.trim().replaceAll("\\s+", "");
     }
 }
